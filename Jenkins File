@@ -23,6 +23,7 @@ pipeline{
          stage('Package Code'){
             steps{
                 sh 'mvn package'
+                echo"This is done"
             }
         }
     }
