@@ -1,32 +1,82 @@
-pipeline{
-    
+pipeline {
     agent any
-    tools{
-        maven 'mymaven' //this is new 
+
+    tools {
+        maven 'mymaven'
     }
- stages{
-        stage('Clone Repo'){
-            steps{
-                git 'https://github.com/Sonal0409/DevOpsCodeDemo.git'
-            }
-        }
-        stage('Compile Code'){
-            steps{
-                sh 'mvn compile'
-            }
-        }
- stage('Test Code'){
-            steps{
-                sh 'mvn test'
-            }
-        }
-         stage('Package Code'){
-            steps{
-                sh 'mvn package'
-                echo"This is done"
+
+    stages {
+        stage('Parallel Execution') {
+            parallel {
+                stage('Build Dev') {
+                    agent { label 'dev' }
+                    stages {
+                        stage('Compile Code') {
+                            steps {
+                                echo 'Compiling the code..'
+                                sh 'mvn compile'
+                            }
+                        }
+                        stage('Test Code') {
+                            steps {
+                                echo 'Running the tests'
+                                sh 'mvn test'
+                            }
+                        }
+                        stage('Package Code') {
+                            steps {
+                                echo 'Packaging the code...'
+                                sh 'mvn package'
+                            }
+                        }
+                        stage('Clean and Install') {
+                            steps {
+                                sh 'mvn clean install'
+                            }
+                        }
+                    }
+                }
+
+                stage('Build Prod') {
+                    agent { label 'prod' }
+                    stages {
+                        stage('Compile Code') {
+                            steps {
+                                echo 'Compiling the code..'
+                                sh 'mvn compile'
+                            }
+                        }
+                        stage('Test Code') {
+                            steps {
+                                echo 'Running the tests'
+                                sh 'mvn test'
+                            }
+                        }
+                        stage('Package Code') {
+                            steps {
+                                echo 'Packaging the code...'
+                                sh 'mvn package'
+                            }
+                        }
+                    }
+                }
             }
         }
     }
-    
+
+    post {
+        success {
+            mail to: 'shreya.khanduri104@gmail.com',
+                 subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: "The build completed successfully!"
+        }
+        failure {
+            mail to: 'shreya.khanduri104@gmail.com',
+                 subject: "FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: "The build failed. Check logs at ${env.BUILD_URL}"
+        }
+    }
+}
+
 }
 
